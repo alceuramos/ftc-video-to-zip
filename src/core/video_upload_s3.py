@@ -1,5 +1,3 @@
-import os
-
 import boto3
 
 from core.settings import settings
@@ -17,13 +15,18 @@ class S3StorageService:
         )
 
     def upload_file(
-        self, file_bytes: bytes, filename: str, content_type: str, user_id: str
-    ) -> str:
-        key = f"videos/{user_id}/{filename}"
-        self.s3.put_object(
-            Bucket=settings.AWS_BUCKET_NAME,
-            Key=key,
-            Body=file_bytes,
-            ContentType=content_type,
-        )
-        return f"https://{settings.AWS_BUCKET_NAME}.s3.amazonaws.com/{key}"
+        self,
+        file_bytes: bytes,
+        filename: str,
+        content_type: str,
+    ):
+        try:
+
+            self.s3.put_object(
+                Bucket=settings.AWS_BUCKET_NAME,
+                Key=filename,
+                Body=file_bytes,
+                ContentType=content_type,
+            )
+        except Exception as e:
+            raise ValueError(f"Failed to upload file to S3: {str(e)}")
