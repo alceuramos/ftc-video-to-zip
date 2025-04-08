@@ -31,6 +31,7 @@ class AuthService:
             "is_reader": user.is_reader,
             "is_editor": user.is_editor,
             "exp": expiration_time,
+            "id": user.id,
         }
         token = encode_jwt(token_data)
         return Token(access_token=token, token_type="bearer")
