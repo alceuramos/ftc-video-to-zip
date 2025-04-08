@@ -1,0 +1,107 @@
+[tool.poetry]
+name = "ftc-video-to-zip-service"
+version = "0.1.0"
+description = ""
+authors = [
+  "Alceu Ramos Conceição Júnior <alceu.ramoos@gmail.com>",
+  "Rafaela Bernardo Rodrigues <rafabernardo.r@gmail.com>",
+]
+readme = "README.md"
+packages = [
+    { include = "api", from = "src"},
+    { include = "core", from = "src"},
+    { include = "db", from = "src"},
+    { include = "repositories", from = "src"},
+    { include = "schemas", from = "src"},
+    { include = "services", from = "src"},
+]
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.13"
+wheel = "0.21.0"
+dependency-injector = "^4.41.0"
+fastapi = "^0.111.1"
+fastapi_healthcheck = "^0.2.12"
+pydantic = "^2.8"
+pydantic-settings = "^2.3.4"
+uvicorn = "^0.30.3"
+sqlalchemy = "^2.0.37"
+psycopg2-binary = "^2.9.10"
+alembic = "^1.14.1"
+bcrypt = "^4.2.1"
+pyjwt = "^2.10.1"
+freezegun = "^1.5.1"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3"
+pytest-cov = "^4.0"
+ruff = "^0.5.4"
+black = "^24.4.2"
+isort = "^5.13.2"
+pylint = "^3.1.0"
+pre-commit = "^4.1.0"
+pytest-mock = "^3.14.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[virtualenvs]
+create = true
+in-project = true
+
+[tool.black]
+line-length = 79
+target-version = ["py311"]
+
+[tool.isort]
+atomic = true
+profile = "black"
+line_length = 79
+skip_gitignore = true
+skip_glob = ["tests/data", "profiling"]
+known_first_party = ["core", "models", "api", "db", "repositories", "services"]
+
+[tool.ruff]
+line-length = 79
+target-version = "py311"
+exclude = [
+  "tests/data",  # Exclude test data
+  "profiling",   # Exclude profiling files
+]
+
+[tool.ruff.lint]
+select = [
+  "E",   # Pycodestyle errors
+  "F",   # Pyflakes
+  "W",   # Pycodestyle warnings
+  "I",   # Isort (import sorting)
+  "C90", # McCabe complexity
+  "B",   # Bugbear
+  "UP",  # Pyupgrade
+  "YTT", # flake8-2020
+]
+ignore = [
+  "E203", # Whitespace before ':' (conflicts with black)
+  "B008",
+]
+
+[tool.pylint.MASTER]
+disable = "C0111,C0103"
+ignore = "CVS"
+persistent = "yes"
+init-hook='import sys; sys.path.append("src")'
+ignore-paths = [
+  '.*test.*',
+]
+
+[tool.pylint.FORMAT]
+max-line-length = 79
+max-module-lines = 1000
+
+[tool.pylint.MESSAGES_CONTROL]
+disable = [
+  "wrong-import-order",
+  "c-extension-no-member",  # Disable the check for C extensions
+  "W0311,W0603,R0903,C0111,C0103",  # Other disabled checks
+]
