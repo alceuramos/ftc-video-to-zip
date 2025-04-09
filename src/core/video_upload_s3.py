@@ -1,3 +1,5 @@
+import io
+
 import boto3
 
 from core.settings import settings
@@ -14,19 +16,12 @@ class S3StorageService:
             aws_account_id=settings.AWS_ACCOUNT_ID,
         )
 
-    def upload_file(
-        self,
-        file_bytes: bytes,
-        filename: str,
-        content_type: str,
-    ):
+    def upload_video_to_s3(self, file_content: bytes, filename: str):
         try:
-
-            self.s3.put_object(
-                Bucket=settings.AWS_BUCKET_NAME,
-                Key=filename,
-                Body=file_bytes,
-                ContentType=content_type,
+            self.s3.upload_fileobj(
+                io.BytesIO(file_content), settings.AWS_BUCKET_NAME, filename
             )
+            print(f"Upload complete: s3://{filename}")
         except Exception as e:
-            raise ValueError(f"Failed to upload file to S3: {str(e)}")
+            print(f"Upload failed: {e}")
+            raise e
