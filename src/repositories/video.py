@@ -33,6 +33,7 @@ class VideoRepository(VideoRepositoryInterface):
         )
         if db_video is None:
             return None
+        kwargs.update({"updated_at": datetime.now()})
         for key, value in kwargs.items():
             setattr(db_video, key, value)
         self.db.commit()
