@@ -43,12 +43,10 @@ async def upload_video(
         if not video:
             raise HTTPException(status_code=400, detail="Failed to save video")
 
-        # Upload video to S3
         background_tasks.add_task(
             video_service.upload_to_s3, content, filename, video.id
         )
 
-        # Extract frames and create zip in background
         background_tasks.add_task(
             video_service.extract_frames_and_upload_zip,
             content,

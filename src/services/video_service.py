@@ -3,22 +3,40 @@ import io
 import os
 import tempfile
 import zipfile
+from typing import Generator, Tuple
 
 import cv2
 import numpy as np
 
+from core.interfaces.storage_service import StorageServiceInterface
 from core.settings import settings
-from core.video_upload_s3 import S3StorageService
 from db.postgresql.interfaces.video import VideoRepositoryInterface
 from schemas.video import Video, VideoInput
+from services.temp_file_service import TempFileService
+from services.video_frame_extractor import VideoFrameExtractor
+from services.zip_service import ZipService
 
 
 class VideoService:
-    def __init__(self, video_repository: VideoRepositoryInterface):
+    def __init__(
+        self,
+        video_repository: VideoRepositoryInterface,
+        storage_service: StorageServiceInterface,
+        temp_file_service: TempFileService = TempFileService(),
+        video_frame_extractor: VideoFrameExtractor = VideoFrameExtractor(
+            frame_interval=1,  # Extract every frame
+            max_frames=100,  # Maximum 100 frames
+            quality=85,  # Good quality with reasonable file size
+        ),
+        zip_service: ZipService = ZipService(),
+    ):
         self.video_repository: VideoRepositoryInterface = video_repository
+        self.storage_service = storage_service
+        self.temp_file_service = temp_file_service
+        self.video_frame_extractor = video_frame_extractor
+        self.zip_service = zip_service
 
     def save_video(self, file, filename, user_id: int) -> Video:
-
         url = f"https://{settings.AWS_BUCKET_NAME}.s3.amazonaws.com/{filename}"
 
         video = VideoInput(
@@ -33,8 +51,7 @@ class VideoService:
 
     def upload_to_s3(self, content, filename, video_id: int):
         try:
-
-            S3StorageService().upload_video_to_s3(content, filename)
+            self.storage_service.upload_file(content, filename)
             self.video_repository.update_video(
                 video_id, **{"status": "uploaded"}
             )
@@ -48,51 +65,21 @@ class VideoService:
         self, video_content: bytes, video_id: int, user_id: int
     ):
         try:
-            # Create a temporary file to store the video
-            with tempfile.NamedTemporaryFile(
-                suffix=".mp4", delete=False
-            ) as temp_video:
-                temp_video.write(video_content)
-                temp_video_path = temp_video.name
-
-            # Create a temporary directory for frames
-            with tempfile.TemporaryDirectory() as temp_dir:
-                # Open the video file
-                cap = cv2.VideoCapture(temp_video_path)
-                frame_count = 0
-
+            with self.temp_file_service.create_temp_video_file(
+                video_content
+            ) as temp_video_path:
                 # Extract frames
-                while True:
-                    ret, frame = cap.read()
-                    if not ret:
-                        break
+                frames = self.video_frame_extractor.extract_frames(
+                    temp_video_path
+                )
 
-                    # Save frame as JPEG
-                    frame_path = os.path.join(
-                        temp_dir, f"frame_{frame_count:04d}.jpg"
-                    )
-                    cv2.imwrite(frame_path, frame)
-                    frame_count += 1
-
-                cap.release()
-
-                # Create zip file in memory
-                zip_buffer = io.BytesIO()
-                with zipfile.ZipFile(
-                    zip_buffer, "w", zipfile.ZIP_DEFLATED
-                ) as zipf:
-                    for root, _, files in os.walk(temp_dir):
-                        for file in files:
-                            file_path = os.path.join(root, file)
-                            arcname = os.path.relpath(file_path, temp_dir)
-                            zipf.write(file_path, arcname)
+                # Create zip file
+                zip_content = self.zip_service.create_zip_from_frames(frames)
 
                 # Upload zip to S3
                 zip_filename = f"frames/{user_id}/video_{video_id}_frames.zip"
                 url = f"https://{settings.AWS_BUCKET_NAME}.s3.amazonaws.com/{zip_filename}"
-                S3StorageService().upload_video_to_s3(
-                    zip_buffer.getvalue(), zip_filename
-                )
+                self.storage_service.upload_file(zip_content, zip_filename)
 
                 # Update video status
                 self.video_repository.update_video(
@@ -105,7 +92,3 @@ class VideoService:
                 video_id, **{"status": "frame_extraction_failed"}
             )
             raise e
-        finally:
-            # Clean up temporary video file
-            if "temp_video_path" in locals():
-                os.unlink(temp_video_path)

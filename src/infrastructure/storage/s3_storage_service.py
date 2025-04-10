@@ -2,10 +2,11 @@ import io
 
 import boto3
 
+from core.interfaces.storage_service import StorageServiceInterface
 from core.settings import settings
 
 
-class S3StorageService:
+class S3StorageService(StorageServiceInterface):
     def __init__(self):
         self.s3 = boto3.client(
             "s3",
@@ -16,7 +17,7 @@ class S3StorageService:
             aws_account_id=settings.AWS_ACCOUNT_ID,
         )
 
-    def upload_video_to_s3(self, file_content: bytes, filename: str):
+    def upload_file(self, file_content: bytes, filename: str) -> None:
         try:
             self.s3.upload_fileobj(
                 io.BytesIO(file_content), settings.AWS_BUCKET_NAME, filename
