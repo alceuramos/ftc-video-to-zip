@@ -1,3 +1,6 @@
+from api.v1.validations.videos import check_video_size, check_video_type
+from core.dependency_injection import Container
+from core.security import verify_jwt
 from dependency_injector.wiring import Provide, inject
 from fastapi import (
     APIRouter,
@@ -5,13 +8,10 @@ from fastapi import (
     Depends,
     File,
     HTTPException,
+    Query,
     UploadFile,
 )
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-
-from api.v1.validations.videos import check_video_size, check_video_type
-from core.dependency_injection import Container
-from core.security import verify_jwt
 from schemas.video import Video
 from services.video_service import VideoService
 
@@ -61,3 +61,17 @@ async def upload_video(
         raise HTTPException(
             status_code=500, detail="Internal Server Error"
         ) from e
+
+
+@router.get("/", response_model=list[Video])
+@inject
+def list_videos(
+    limit: int = Query(10, ge=1, le=100),
+    page: int = Query(1, ge=1, le=100),
+    video_service: VideoService = (Depends(Provide[Container.video_service])),
+    auth: HTTPAuthorizationCredentials = Depends(HTTPBearer()),
+):
+    user = verify_jwt(auth.credentials)
+    user_id = user["id"]
+    videos = video_service.list_videos(user_id, limit=limit, page=page)
+    return videos

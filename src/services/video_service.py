@@ -7,7 +7,6 @@ from typing import Generator, Tuple
 
 import cv2
 import numpy as np
-
 from core.interfaces.storage_service import StorageServiceInterface
 from core.settings import settings
 from db.postgresql.interfaces.video import VideoRepositoryInterface
@@ -92,3 +91,6 @@ class VideoService:
                 video_id, **{"status": "frame_extraction_failed"}
             )
             raise e
+
+    def list_videos(self, user_id: int, limit: int, page: int) -> list[Video]:
+        return self.video_repository.list_videos(user_id, limit, page - 1)
