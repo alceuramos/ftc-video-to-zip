@@ -12,7 +12,9 @@ from fastapi import (
     UploadFile,
 )
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from schemas.user import User
 from schemas.video import Video
+from services.notification_service import NotificationService
 from services.video_service import VideoService
 
 router = APIRouter(prefix="/video")
@@ -50,8 +52,8 @@ async def upload_video(
         background_tasks.add_task(
             video_service.extract_frames_and_upload_zip,
             content,
-            video.id,
-            user_id,
+            video,
+            user,
         )
 
         return video

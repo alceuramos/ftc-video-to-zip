@@ -27,6 +27,7 @@ class AuthService:
         )
         token_data = {
             "sub": user.email,
+            "name": user.name,
             "is_admin": user.is_admin,
             "is_reader": user.is_reader,
             "is_editor": user.is_editor,
