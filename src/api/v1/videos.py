@@ -9,16 +9,16 @@ from fastapi import (
 )
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+from api.v1.validations.videos import check_video_size, check_video_type
 from core.dependency_injection import Container
 from core.security import verify_jwt
-from core.settings import settings
 from schemas.video import Video
 from services.video_service import VideoService
 
 router = APIRouter(prefix="/video")
 
 
-@router.post("/upload")
+@router.post("/upload", response_model=Video)
 @inject
 async def upload_video(
     file: UploadFile = File(...),
@@ -28,18 +28,12 @@ async def upload_video(
 ):
     try:
         user = verify_jwt(auth.credentials)
-        allowed_video_types = [
-            "video/mp4",
-            "video/mkv",
-            "video/avi",
-            "video/mov",
-            "video/quicktime",
-        ]
-        if file.content_type not in allowed_video_types:
+
+        if not check_video_type(file):
             raise ValueError(
-                f"File type '{file.content_type}' is not allowed. Allowed types: {', '.join(allowed_video_types)}"
+                f"File type '{file.content_type}' is not allowed."
             )
-        if file.size > 10 * 1024 * 1024:  # 10 MB limit
+        if not check_video_size(file):
             raise ValueError("File size exceeds the limit of 10 MB")
 
         content = await file.read()
@@ -51,6 +45,13 @@ async def upload_video(
 
         background_tasks.add_task(
             video_service.upload_to_s3, content, filename, video.id
+        )
+
+        background_tasks.add_task(
+            video_service.extract_frames_and_upload_zip,
+            content,
+            video.id,
+            user_id,
         )
 
         return video
