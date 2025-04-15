@@ -40,3 +40,16 @@ class VideoRepository(VideoRepositoryInterface):
         self.db.refresh(db_video)
         video = Video.model_validate(db_video)
         return video
+
+    def list_videos(
+        self, user_id: int, limit: int, offset: int
+    ) -> list[Video]:
+        db_videos = (
+            self.db.query(VideoDB)
+            .filter(VideoDB.user_id == user_id)
+            .offset(offset)
+            .limit(limit)
+            .all()
+        )
+        videos = [Video.model_validate(db_video) for db_video in db_videos]
+        return videos

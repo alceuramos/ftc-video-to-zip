@@ -12,4 +12,5 @@ def check_video_type(file: UploadFile) -> bool:
         "video/avi",
         "video/mov",
         "video/quicktime",
+        "video/webm",
     ]
