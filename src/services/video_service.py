@@ -1,16 +1,9 @@
-import asyncio
-import io
-import os
-import tempfile
-import zipfile
-from typing import Generator, Tuple
-
-import cv2
-import numpy as np
 from core.interfaces.storage_service import StorageServiceInterface
 from core.settings import settings
 from db.postgresql.interfaces.video import VideoRepositoryInterface
+from schemas.user import User
 from schemas.video import Video, VideoInput
+from services.notification_service import NotificationService
 from services.temp_file_service import TempFileService
 from services.video_frame_extractor import VideoFrameExtractor
 from services.zip_service import ZipService
@@ -61,8 +54,9 @@ class VideoService:
             raise e
 
     def extract_frames_and_upload_zip(
-        self, video_content: bytes, video_id: int, user_id: int
+        self, video_content: bytes, video: Video, user: dict
     ):
+        user_id = user["id"]
         try:
             with self.temp_file_service.create_temp_video_file(
                 video_content
@@ -76,20 +70,21 @@ class VideoService:
                 zip_content = self.zip_service.create_zip_from_frames(frames)
 
                 # Upload zip to S3
-                zip_filename = f"frames/{user_id}/video_{video_id}_frames.zip"
+                zip_filename = f"frames/{user_id}/video_{video.id}_frames.zip"
                 url = f"https://{settings.AWS_BUCKET_NAME}.s3.amazonaws.com/{zip_filename}"
                 self.storage_service.upload_file(zip_content, zip_filename)
 
                 # Update video status
                 self.video_repository.update_video(
-                    video_id,
+                    video.id,
                     **{"status": "frames_extracted", "zip_path": url},
                 )
 
         except Exception as e:
-            self.video_repository.update_video(
-                video_id, **{"status": "frame_extraction_failed"}
-            )
+            video.status = "frame_extraction_failed"
+            self.video_repository.update_video(video.id, **video.model_dump())
+
+            NotificationService().send(user, video)
             raise e
 
     def list_videos(self, user_id: int, limit: int, page: int) -> list[Video]:

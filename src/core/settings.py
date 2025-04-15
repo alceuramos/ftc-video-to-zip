@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     AWS_SESSION_TOKEN: str
     AWS_ACCOUNT_ID: str
 
+    EMAIL_TOKEN: str = ""
+    EMAIL_SENDER: str = ""
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     @property
