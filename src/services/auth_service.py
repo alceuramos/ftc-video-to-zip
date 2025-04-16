@@ -27,10 +27,12 @@ class AuthService:
         )
         token_data = {
             "sub": user.email,
+            "name": user.name,
             "is_admin": user.is_admin,
             "is_reader": user.is_reader,
             "is_editor": user.is_editor,
             "exp": expiration_time,
+            "id": user.id,
         }
         token = encode_jwt(token_data)
         return Token(access_token=token, token_type="bearer")
