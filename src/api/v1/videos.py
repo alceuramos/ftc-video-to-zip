@@ -1,6 +1,3 @@
-from api.v1.validations.videos import check_video_size, check_video_type
-from core.dependency_injection import Container
-from core.security import verify_jwt
 from dependency_injector.wiring import Provide, inject
 from fastapi import (
     APIRouter,
@@ -12,6 +9,10 @@ from fastapi import (
     UploadFile,
 )
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
+from api.v1.validations.videos import check_video_size, check_video_type
+from core.dependency_injection import Container
+from core.security import verify_jwt
 from schemas.user import User
 from schemas.video import Video
 from services.notification_service import NotificationService
@@ -46,11 +47,11 @@ async def upload_video(
             raise HTTPException(status_code=400, detail="Failed to save video")
 
         background_tasks.add_task(
-            video_service.upload_to_s3, content, filename, video.id
+            video_service.upload_video, content, filename, video.id
         )
 
         background_tasks.add_task(
-            video_service.extract_frames_and_upload_zip,
+            video_service.process_video,
             content,
             video,
             user,

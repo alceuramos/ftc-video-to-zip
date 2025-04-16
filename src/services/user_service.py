@@ -10,7 +10,6 @@ class UserService:
         self.user_repository: UserRepositoryInterface = user_repository
 
     def create_user(self, user: UserInput) -> User:
-        """Creates a new user with a hashed password."""
         hashed_password = hash_password(user.password)
         user.password = hashed_password
         existing_user = self.user_repository.get_by_email(user.email)
@@ -19,7 +18,6 @@ class UserService:
         return self.user_repository.add(user)
 
     def get_user_by_email(self, email: str) -> User | None:
-        """Retrieve a user by email."""
         return self.user_repository.get_by_email(email)
 
     def is_user_authenticated(self, email: str, password: str) -> bool:
@@ -33,7 +31,6 @@ class UserService:
         return self.user_repository.list_users(limit, page - 1)
 
     def update_user(self, user_id: int, user_data: UserUpdate):
-        """Update user details."""
         user = self.user_repository.get_by_id(user_id)
         if user:
             self.user_repository.update_user(
@@ -42,7 +39,6 @@ class UserService:
         return user
 
     def delete_user(self, user_id: str):
-        """Delete a user."""
         user = self.user_repository.get_by_id(user_id)
         if user:
             self.user_repository.delete_user(user)
