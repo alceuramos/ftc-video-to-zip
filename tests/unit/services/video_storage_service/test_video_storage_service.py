@@ -27,16 +27,12 @@ def video_storage_service(storage_service_mock, video_repository_mock):
 def test_upload_to_storage_success(
     video_storage_service, storage_service_mock, video_repository_mock
 ):
-    """Test successful video upload to storage."""
-    # Arrange
     content = b"test content"
     filename = "test.mp4"
     video_id = 1
 
-    # Act
     video_storage_service.upload_to_storage(content, filename, video_id)
 
-    # Assert
     storage_service_mock.upload_file.assert_called_once_with(content, filename)
     video_repository_mock.update_video.assert_called_once_with(
         video_id, status="uploaded"
@@ -46,14 +42,11 @@ def test_upload_to_storage_success(
 def test_upload_to_storage_failure(
     video_storage_service, storage_service_mock, video_repository_mock
 ):
-    """Test failed video upload to storage."""
-    # Arrange
     content = b"test content"
     filename = "test.mp4"
     video_id = 1
     storage_service_mock.upload_file.side_effect = Exception("Upload failed")
 
-    # Act & Assert
     with pytest.raises(Exception) as exc_info:
         video_storage_service.upload_to_storage(content, filename, video_id)
 
@@ -65,20 +58,16 @@ def test_upload_to_storage_failure(
 
 
 def test_upload_zip_to_storage(video_storage_service, storage_service_mock):
-    """Test successful zip file upload to storage."""
-    # Arrange
     zip_content = b"zip content"
     user_id = 1
     video_id = 1
     expected_filename = f"frames/{user_id}/video_{video_id}_frames.zip"
     expected_url = f"https://{settings.AWS_BUCKET_NAME}.s3.amazonaws.com/{expected_filename}"
 
-    # Act
     result = video_storage_service.upload_zip_to_storage(
         zip_content, user_id, video_id
     )
 
-    # Assert
     assert result == expected_url
     storage_service_mock.upload_file.assert_called_once_with(
         zip_content, expected_filename

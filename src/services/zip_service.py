@@ -8,15 +8,7 @@ class ZipService:
     def create_zip_from_frames(
         frames: Generator[Tuple[int, bytes], None, None],
     ) -> bytes:
-        """
-        Create a zip file from video frames.
 
-        Args:
-            frames: Generator yielding frame number and frame data
-
-        Returns:
-            Zip file as bytes
-        """
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
             for frame_count, frame_bytes in frames:
