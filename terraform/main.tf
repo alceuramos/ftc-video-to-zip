@@ -27,10 +27,10 @@ module "video_to_zip_service_api" {
   db_db_name            = module.db.db-name
   secret-name           = module.db.secret-name
   bucket_name           = module.s3_storage.bucket_name
-  aws_access_key_id     = ""
-  aws_secret_access_key = ""
+  aws_access_key_id     = var.aws_access_key_id
+  aws_secret_access_key = var.aws_secret_access_key
   aws_region            = var.region_default
-  aws_session_token     = secret.aws_session_token
+  aws_session_token     = var.aws_session_token
   aws_account_id        = var.account_id
 
 
