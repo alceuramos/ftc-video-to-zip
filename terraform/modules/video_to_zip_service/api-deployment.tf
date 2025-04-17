@@ -69,6 +69,30 @@ resource "kubernetes_deployment" "video_to_zip_service_api" {
             name  = "POSTGRES_DB"
             value = var.db_db_name
           }
+          env {
+            name  = "AWS_BUCKET_NAME" // Updated environment variable for S3 bucket name
+            value = var.bucket_name   // Use the variable passed from the module
+          }
+          env {
+            name  = "AWS_ACCESS_KEY_ID"
+            value = var.aws_access_key_id
+          }
+          env {
+            name  = "AWS_SECRET_ACCESS_KEY"
+            value = var.aws_secret_access_key
+          }
+          env {
+            name  = "AWS_REGION"
+            value = var.aws_region
+          }
+          env {
+            name  = "AWS_SESSION_TOKEN"
+            value = var.aws_session_token
+          }
+          env {
+            name  = "AWS_ACCOUNT_ID"
+            value = var.aws_account_id
+          }
         }
       }
     }
