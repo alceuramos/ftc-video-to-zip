@@ -61,7 +61,8 @@ class VideoService:
             raise e
 
     def list_videos(self, user_id: int, limit: int, page: int) -> list[Video]:
-        return self.video_repository.list_videos(user_id, limit, page - 1)
+        offset = (page - 1) * limit
+        return self.video_repository.list_videos(user_id, limit, offset)
 
     def get_video_download_url(
         self, video_id: str, user_id: int, item_type: ItemType
