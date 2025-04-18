@@ -1,15 +1,14 @@
 from core.interfaces.storage_service import StorageServiceInterface
 from core.settings import settings
 from db.postgresql.interfaces.video import VideoRepositoryInterface
-from schemas.user import User
-from schemas.video import Video, VideoInput
+from schemas.video import ItemType, Video, VideoInput
+from services.exceptions import ItemAccessException, ItemNotFoundException
 from services.notification_service import NotificationService
 from services.video_processing_service import VideoProcessingService
 from services.video_storage_service import VideoStorageService
 
 
 class VideoService:
-
     def __init__(
         self,
         video_repository: VideoRepositoryInterface,
@@ -23,7 +22,6 @@ class VideoService:
         self.notification_service = NotificationService()
 
     def save_video(self, file, filename, user_id: int) -> Video:
-
         url = f"https://{settings.AWS_BUCKET_NAME}.s3.amazonaws.com/{filename}"
 
         video = VideoInput(
@@ -63,5 +61,24 @@ class VideoService:
             raise e
 
     def list_videos(self, user_id: int, limit: int, page: int) -> list[Video]:
-
         return self.video_repository.list_videos(user_id, limit, page - 1)
+
+    def get_video_download_url(
+        self, video_id: str, user_id: int, item_type: ItemType
+    ) -> str:
+        video = self.video_repository.get(video_id)
+        if video is None:
+            raise ItemNotFoundException("Video not found.")
+        if video.user_id != user_id:
+            raise ItemAccessException("Forbidden access to the video.")
+        path_options = {
+            ItemType.video: video.file_path,
+            ItemType.zip: video.zip_path,
+        }
+        item_path = path_options.get(item_type)
+        filepath = self.get_filename(item_path)
+        return self.storage_service.get_download_url(filepath)
+
+    @staticmethod
+    def get_filename(path: str) -> str:
+        return path.split("s3.amazonaws.com/")[1]

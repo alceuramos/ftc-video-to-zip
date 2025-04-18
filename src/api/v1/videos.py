@@ -1,3 +1,6 @@
+from api.v1.validations.videos import check_video_size, check_video_type
+from core.dependency_injection import Container
+from core.security import verify_jwt
 from dependency_injector.wiring import Provide, inject
 from fastapi import (
     APIRouter,
@@ -9,12 +12,9 @@ from fastapi import (
     UploadFile,
 )
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-
-from api.v1.validations.videos import check_video_size, check_video_type
-from core.dependency_injection import Container
-from core.security import verify_jwt
 from schemas.user import User
-from schemas.video import Video
+from schemas.video import ItemType, Video
+from services.exceptions import ItemAccessException, ItemNotFoundException
 from services.notification_service import NotificationService
 from services.video_service import VideoService
 
@@ -78,3 +78,26 @@ def list_videos(
     user_id = user["id"]
     videos = video_service.list_videos(user_id, limit=limit, page=page)
     return videos
+
+
+@router.get("/download/{video_id}")
+@inject
+async def download_zip(
+    video_id: int,
+    item_type: ItemType = Query(default=ItemType.zip),
+    video_service: VideoService = Depends(Provide[Container.video_service]),
+    auth: HTTPAuthorizationCredentials = Depends(HTTPBearer()),
+):
+    user = verify_jwt(auth.credentials)
+    user_id = user["id"]
+
+    try:
+        download_url = video_service.get_video_download_url(
+            video_id, user_id, item_type
+        )
+    except ItemNotFoundException as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    except ItemAccessException as e:
+        raise HTTPException(status_code=403, detail=str(e)) from e
+
+    return {"download_url": download_url}

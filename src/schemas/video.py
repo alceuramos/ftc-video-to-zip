@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import Enum
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -24,3 +25,7 @@ class Video(BaseModel):
     id: int | None = None
 
     model_config = ConfigDict(extra="ignore", from_attributes=True)
+
+class ItemType(str, Enum):
+    video = "video"
+    zip = "zip"

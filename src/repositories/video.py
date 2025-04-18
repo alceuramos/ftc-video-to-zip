@@ -53,3 +53,11 @@ class VideoRepository(VideoRepositoryInterface):
         )
         videos = [Video.model_validate(db_video) for db_video in db_videos]
         return videos
+
+    def get(self, video_id: int) -> Video:
+        db_video = (
+            self.db.query(VideoDB).filter(VideoDB.id == video_id).first()
+        )
+        if db_video is None:
+            return None
+        return Video.model_validate(db_video)
