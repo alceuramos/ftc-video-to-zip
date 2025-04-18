@@ -9,6 +9,7 @@ ARG API_PORT=8000
 #     API_PORT=${API_PORT}
 
 WORKDIR /ftc-video-to-zip-service
+RUN apt-get update && apt-get install -y python3-opencv
 RUN pip install poetry==1.8.3
 RUN poetry config virtualenvs.create false
 
