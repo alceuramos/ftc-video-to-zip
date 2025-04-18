@@ -12,10 +12,8 @@ from fastapi import (
     UploadFile,
 )
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from schemas.user import User
 from schemas.video import ItemType, Video
 from services.exceptions import ItemAccessException, ItemNotFoundException
-from services.notification_service import NotificationService
 from services.video_service import VideoService
 
 router = APIRouter(prefix="/video")
