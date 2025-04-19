@@ -1,12 +1,11 @@
 from core.interfaces.storage_service import StorageServiceInterface
 from core.settings import settings
 from db.postgresql.interfaces.video import VideoRepositoryInterface
-from schemas.user import User
-from schemas.video import Video, VideoInput
+from schemas.video import ItemType, Video, VideoInput
+from services.exceptions import ItemAccessException, ItemNotFoundException
 from services.notification_service import NotificationService
-from services.temp_file_service import TempFileService
-from services.video_frame_extractor import VideoFrameExtractor
-from services.zip_service import ZipService
+from services.video_processing_service import VideoProcessingService
+from services.video_storage_service import VideoStorageService
 
 
 class VideoService:
@@ -14,19 +13,13 @@ class VideoService:
         self,
         video_repository: VideoRepositoryInterface,
         storage_service: StorageServiceInterface,
-        temp_file_service: TempFileService = TempFileService(),
-        video_frame_extractor: VideoFrameExtractor = VideoFrameExtractor(
-            frame_interval=1,  # Extract every frame
-            max_frames=100,  # Maximum 100 frames
-            quality=85,  # Good quality with reasonable file size
-        ),
-        zip_service: ZipService = ZipService(),
     ):
-        self.video_repository: VideoRepositoryInterface = video_repository
-        self.storage_service = storage_service
-        self.temp_file_service = temp_file_service
-        self.video_frame_extractor = video_frame_extractor
-        self.zip_service = zip_service
+        self.video_repository = video_repository
+        self.storage_service = VideoStorageService(
+            storage_service, video_repository
+        )
+        self.processing_service = VideoProcessingService()
+        self.notification_service = NotificationService()
 
     def save_video(self, file, filename, user_id: int) -> Video:
         url = f"https://{settings.AWS_BUCKET_NAME}.s3.amazonaws.com/{filename}"
@@ -41,51 +34,52 @@ class VideoService:
 
         return saved_video
 
-    def upload_to_s3(self, content, filename, video_id: int):
-        try:
-            self.storage_service.upload_file(content, filename)
-            self.video_repository.update_video(
-                video_id, **{"status": "uploaded"}
-            )
-        except Exception as e:
-            self.video_repository.update_video(
-                video_id, **{"status": "failed"}
-            )
-            raise e
+    def upload_video(self, content, filename, video_id: int):
+        self.storage_service.upload_to_storage(content, filename, video_id)
 
-    def extract_frames_and_upload_zip(
-        self, video_content: bytes, video: Video, user: dict
-    ):
+    def process_video(self, video_content: bytes, video: Video, user: dict):
         user_id = user["id"]
         try:
-            with self.temp_file_service.create_temp_video_file(
+            zip_content = self.processing_service.extract_frames_to_zip(
                 video_content
-            ) as temp_video_path:
-                # Extract frames
-                frames = self.video_frame_extractor.extract_frames(
-                    temp_video_path
-                )
+            )
 
-                # Create zip file
-                zip_content = self.zip_service.create_zip_from_frames(frames)
+            url = self.storage_service.upload_zip_to_storage(
+                zip_content, user_id, video.id
+            )
 
-                # Upload zip to S3
-                zip_filename = f"frames/{user_id}/video_{video.id}_frames.zip"
-                url = f"https://{settings.AWS_BUCKET_NAME}.s3.amazonaws.com/{zip_filename}"
-                self.storage_service.upload_file(zip_content, zip_filename)
-
-                # Update video status
-                self.video_repository.update_video(
-                    video.id,
-                    **{"status": "frames_extracted", "zip_path": url},
-                )
-
+            self.video_repository.update_video(
+                video.id,
+                **{"status": "frames_extracted", "zip_path": url},
+            )
         except Exception as e:
-            video.status = "frame_extraction_failed"
-            self.video_repository.update_video(video.id, **video.model_dump())
+            self.video_repository.update_video(
+                video.id, **{"status": "frame_extraction_failed"}
+            )
 
-            NotificationService().send(user, video)
+            self.notification_service.send(user, video)
             raise e
 
     def list_videos(self, user_id: int, limit: int, page: int) -> list[Video]:
-        return self.video_repository.list_videos(user_id, limit, page - 1)
+        offset = (page - 1) * limit
+        return self.video_repository.list_videos(user_id, limit, offset)
+
+    def get_video_download_url(
+        self, video_id: str, user_id: int, item_type: ItemType
+    ) -> str:
+        video = self.video_repository.get(video_id)
+        if video is None:
+            raise ItemNotFoundException("Video not found.")
+        if video.user_id != user_id:
+            raise ItemAccessException("Forbidden access to the video.")
+        path_options = {
+            ItemType.video: video.file_path,
+            ItemType.zip: video.zip_path,
+        }
+        item_path = path_options.get(item_type)
+        filepath = self.get_filename(item_path)
+        return self.storage_service.get_download_url(filepath)
+
+    @staticmethod
+    def get_filename(path: str) -> str:
+        return path.split("s3.amazonaws.com/")[1]

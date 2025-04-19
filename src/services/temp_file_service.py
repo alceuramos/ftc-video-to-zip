@@ -10,15 +10,6 @@ class TempFileService:
     def create_temp_video_file(
         video_content: bytes,
     ) -> Generator[str, None, None]:
-        """
-        Create a temporary video file and yield its path.
-
-        Args:
-            video_content: Video content as bytes
-
-        Yields:
-            Path to the temporary video file
-        """
         with tempfile.NamedTemporaryFile(
             suffix=".mp4", delete=False
         ) as temp_video:

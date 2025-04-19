@@ -12,3 +12,16 @@ class StorageServiceInterface(ABC):
             filename: Name of the file in storage
         """
         pass
+
+    @abstractmethod
+    def get_download_url(self, filepath: str) -> str:
+        """
+        Get a pre-signed URL for downloading a file.
+
+        Args:
+            filename: The name of the file in storage.
+
+        Returns:
+            A pre-signed URL for the file.
+        """
+        pass

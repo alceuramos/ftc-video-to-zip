@@ -17,3 +17,7 @@ class VideoRepositoryInterface(abc.ABC):
         self, user_id: int, limit: int, offset: int
     ) -> list[Video]:
         raise NotImplementedError
+
+    @abc.abstractmethod
+    def get(self, video_id: int) -> Video:
+        raise NotImplementedError

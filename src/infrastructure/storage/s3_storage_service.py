@@ -1,7 +1,6 @@
 import io
 
 import boto3
-
 from core.interfaces.storage_service import StorageServiceInterface
 from core.settings import settings
 
@@ -26,3 +25,14 @@ class S3StorageService(StorageServiceInterface):
         except Exception as e:
             print(f"Upload failed: {e}")
             raise e
+
+    def get_download_url(self, filepath: str) -> str:
+        download_url = self.s3.generate_presigned_url(
+            "get_object",
+            Params={
+                "Bucket": settings.AWS_BUCKET_NAME,
+                "Key": filepath,
+            },
+            ExpiresIn=3600,
+        )
+        return download_url

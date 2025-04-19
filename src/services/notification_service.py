@@ -1,8 +1,9 @@
-from core.settings import settings
 from jinja2 import Environment, FileSystemLoader
-from schemas.video import Video
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
+
+from core.settings import settings
+from schemas.video import Video
 
 
 class NotificationService:
@@ -20,15 +21,7 @@ class NotificationService:
         user: dict,
         video: Video,
     ) -> None:
-        """
-        Send notification email to user .
 
-        Args:
-            user: dict with user data
-            video: Video object
-        Returns:
-            None
-        """
         subject = f"Unable to Process '{video.title}' - Please Review"
         context = {
             "user_name": str(user.get("name", "")),

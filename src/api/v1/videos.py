@@ -12,9 +12,8 @@ from fastapi import (
     UploadFile,
 )
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from schemas.user import User
-from schemas.video import Video
-from services.notification_service import NotificationService
+from schemas.video import ItemType, Video
+from services.exceptions import ItemAccessException, ItemNotFoundException
 from services.video_service import VideoService
 
 router = APIRouter(prefix="/video")
@@ -46,11 +45,11 @@ async def upload_video(
             raise HTTPException(status_code=400, detail="Failed to save video")
 
         background_tasks.add_task(
-            video_service.upload_to_s3, content, filename, video.id
+            video_service.upload_video, content, filename, video.id
         )
 
         background_tasks.add_task(
-            video_service.extract_frames_and_upload_zip,
+            video_service.process_video,
             content,
             video,
             user,
@@ -77,3 +76,26 @@ def list_videos(
     user_id = user["id"]
     videos = video_service.list_videos(user_id, limit=limit, page=page)
     return videos
+
+
+@router.get("/download/{video_id}")
+@inject
+async def download_zip(
+    video_id: int,
+    item_type: ItemType = Query(default=ItemType.zip),
+    video_service: VideoService = Depends(Provide[Container.video_service]),
+    auth: HTTPAuthorizationCredentials = Depends(HTTPBearer()),
+):
+    user = verify_jwt(auth.credentials)
+    user_id = user["id"]
+
+    try:
+        download_url = video_service.get_video_download_url(
+            video_id, user_id, item_type
+        )
+    except ItemNotFoundException as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    except ItemAccessException as e:
+        raise HTTPException(status_code=403, detail=str(e)) from e
+
+    return {"download_url": download_url}
