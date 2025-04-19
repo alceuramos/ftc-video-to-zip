@@ -5,11 +5,11 @@ on:
     workflows: ["Terraform Deploy"] # Name of the first workflow
     types:
       - completed
-  push:
-    branches:
-      - main
-  pull_request:
-    types: [opened, synchronize, reopened]
+  # push:
+  #   branches:
+  #     - main
+  # pull_request:
+  #   types: [opened, synchronize, reopened]
 
 jobs:
   build-and-analyze:
@@ -101,8 +101,3 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: |
           aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }} --region ${{ secrets.AWS_REGION }}
-
-      - name: Restart Kubernetes Deployment
-        if: github.ref == 'refs/heads/main'
-        run: |
-          kubectl rollout restart --all
