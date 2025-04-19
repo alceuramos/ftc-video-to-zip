@@ -14,13 +14,16 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+        run: |
+          echo "AWS_REGION: ${{ secrets.AWS_REGION }}"
+          echo "AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}"
 
       - name: Set up AWS CLI
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Create terraform.tfvars.json
         run: |
@@ -29,7 +32,7 @@ jobs:
             "aws_secret_access_key": "${{ secrets.AWS_SECRET_ACCESS_KEY }}",
             "aws_session_token": "${{ secrets.AWS_SESSION_TOKEN }}",
             "bucket_name": "${{ secrets.AWS_BUCKET }}",
-            "region_default": "us-east-1",
+            "region_default": ${{ secrets.AWS_REGION }},
             "account_id": "${{ secrets.AWS_ACCOUNT_ID }}"
           }' > terraform.tfvars.json
 
