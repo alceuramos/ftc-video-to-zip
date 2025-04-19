@@ -15,9 +15,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      -name: Test Pipeline variables
+      - name: Test Pipeline variables
         run: |
-          echo "Test Pipeline variables":
+          echo "Test Pipeline variables"
           echo "AWS_REGION: ${{ secrets.AWS_REGION }}"
           echo "AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}"
 
