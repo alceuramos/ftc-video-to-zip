@@ -125,6 +125,7 @@ jobs:
       EKS_CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}
       AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
       ECR_REPOSITORY_NAME: ${{ secrets.ECR_REPOSITORY_NAME }}
+      DEPLOYMENT_NAME: "video-to-zip-service-api"
     needs: [setup-and-run-tests, terraform]
     if: github.event_name == 'push'
     steps:
@@ -150,3 +151,7 @@ jobs:
       - name: Configure kubectl
         run: |
           aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --region $AWS_REGION
+
+      - name: Restart Deployment
+        run: |
+          kubectl rollout restart deployment $DEPLOYMENT_NAME
