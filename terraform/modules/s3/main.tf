@@ -40,8 +40,12 @@ resource "aws_s3_bucket_lifecycle_configuration" "video_storage" {
     id     = "cleanup_old_files"
     status = "Enabled"
 
+    filter {
+      prefix = "" // Specify a prefix or use a filter
+    }
+
     expiration {
       days = var.expiration_days
     }
   }
-} 
+}
