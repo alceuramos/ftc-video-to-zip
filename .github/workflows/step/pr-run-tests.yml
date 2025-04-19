@@ -1,4 +1,4 @@
-name: lint-and-commit
+name: Run Tests
 
 on:
   workflow_run:
@@ -8,7 +8,7 @@ on:
 
 jobs:
 
-  build-and-analyze:
+  setup-and-run-tests:
     runs-on: ubuntu-latest
     env:
       POSTGRES_USER: "username"
@@ -28,7 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Required for SonarQube analysis
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
