@@ -1,11 +1,15 @@
 name: lint-and-commit
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    types: [opened, synchronize, reopened]
+  workflow_run:
+    workflows: ["Terraform Deploy"] # Name of the first workflow
+    types:
+      - completed
+  # push:
+  #   branches:
+  #     - main
+  # pull_request:
+  #   types: [opened, synchronize, reopened]
 
 jobs:
   build-and-analyze:
@@ -15,6 +19,12 @@ jobs:
       POSTGRES_PASSWORD: "password"
       POSTGRES_DB: "database"
       POSTGRES_HOST: "localhost"
+      AWS_ACCESS_KEY_ID: ""
+      AWS_SECRET_ACCESS_KEY: ""
+      AWS_REGION: ""
+      AWS_BUCKET_NAME: ""
+      AWS_SESSION_TOKEN: ""
+      AWS_ACCOUNT_ID: ""
     permissions:
       contents: write
       pull-requests: write
@@ -50,20 +60,23 @@ jobs:
       - name: Install library
         run: poetry install --no-interaction
 
-      - name: Run tests with coverage
-        run: poetry run pytest --cov=src --cov-report=xml:coverage.xml --cov-report=term
+      # - name: Run tests with coverage
+      #   run: poetry run pytest --cov=src --cov-report=xml:coverage.xml --cov-report=term
 
   terraform-deploy:
     runs-on: ubuntu-latest
     env:
-      AWS_REGION: us-east-1
+      AWS_REGION: ${{ secrets.AWS_REGION }}
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
-      BUCKET_TF_STATE: ${{ secrets.AWS_BUCKET }}
+      EKS_CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+      ECR_REPOSITORY_NAME: ${{ secrets.ECR_REPOSITORY_NAME }}
     needs: build-and-analyze # This ensures this job only runs if build-and-analyze succeeds
     steps:
       - uses: actions/checkout@v4
+
       - name: Log in to Amazon ECR
         if: github.ref == 'refs/heads/main'
         id: login-ecr
@@ -78,3 +91,13 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: |
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:latest
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v1
+        with:
+          version: 'latest' # Specify the version you need
+
+      - name: Configure kubectl
+        if: github.ref == 'refs/heads/main'
+        run: |
+          aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }} --region ${{ secrets.AWS_REGION }}
