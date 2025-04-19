@@ -1,7 +1,7 @@
 module "eks" {
   source             = "./modules/eks"
   eks_name           = var.eks_name
-  node_group_name    = var.node_grou_name
+  node_group_name    = var.node_group_name
   node_instance_type = var.node_instance_type
   subnet_ids         = [for subnet in data.aws_subnet.subnet : subnet.id if subnet.availability_zone != "${var.region_default}e"]
   security_group_id  = module.security_group.security_group_id

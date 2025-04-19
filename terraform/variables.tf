@@ -6,7 +6,7 @@ variable "eks_name" {
   default = "eks-fiap-tech"
 }
 
-variable "node_grou_name" {
+variable "node_group_name" {
   default = "eks-fiap-tech-node"
 }
 
