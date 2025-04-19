@@ -30,7 +30,6 @@ jobs:
       contents: write
       pull-requests: write
 
-    if: "1" == "2"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -62,8 +61,8 @@ jobs:
       - name: Install library
         run: poetry install --no-interaction
 
-      # - name: Run tests with coverage
-      #   run: poetry run pytest --cov=src --cov-report=xml:coverage.xml --cov-report=term
+      - name: Run tests with coverage
+        run: poetry run pytest --cov=src --cov-report=xml:coverage.xml --cov-report=term
 
   terraform-deploy:
     runs-on: ubuntu-latest
@@ -76,7 +75,7 @@ jobs:
       AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
       ECR_REPOSITORY_NAME: ${{ secrets.ECR_REPOSITORY_NAME }}
     needs: build-and-analyze # This ensures this job only runs if build-and-analyze succeeds
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
 
@@ -85,11 +84,12 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: Build Docker image
-        if: github.ref == 'refs/heads/main'
+        if: github.event_name == 'push'
         run: |
           docker build -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:latest .
 
       - name: Push Docker image to ECR
+        if: github.event_name == 'push'
         run: |
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:latest
 
@@ -99,5 +99,6 @@ jobs:
           version: 'latest' # Specify the version you need
 
       - name: Configure kubectl
+        if: github.event_name == 'push'
         run: |
           aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }} --region ${{ secrets.AWS_REGION }}
