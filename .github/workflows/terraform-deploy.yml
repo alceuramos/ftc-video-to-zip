@@ -50,10 +50,8 @@ jobs:
         run: terraform init
 
       - name: Terraform Plan
-        run: terraform plan -var-file=terraform.tfvars.json
+        run: terraform plan -out=tf.plan -var-file=terraform.tfvars.json
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve -var-file=terraform.tfvars.json
-      - name: Terraform Apply
         if: github.ref == 'refs/heads/main'
-        run: terraform apply -auto-approve -var-file=terraform.tfvars.json
+        run: terraform apply -auto-approve tf.plan
