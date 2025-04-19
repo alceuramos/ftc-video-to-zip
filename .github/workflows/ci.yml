@@ -74,7 +74,7 @@ jobs:
       AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
       ECR_REPOSITORY_NAME: ${{ secrets.ECR_REPOSITORY_NAME }}
     needs: build-and-analyze # This ensures this job only runs if build-and-analyze succeeds
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: 1 == 2
     steps:
       - uses: actions/checkout@v4
 
