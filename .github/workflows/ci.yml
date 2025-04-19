@@ -4,7 +4,7 @@ on:
   workflow_run:
     workflows: ["Terraform Deploy"] # Name of the first workflow
     types:
-      - completed
+      - success
   # push:
   #   branches:
   #     - main
@@ -74,11 +74,11 @@ jobs:
       AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
       ECR_REPOSITORY_NAME: ${{ secrets.ECR_REPOSITORY_NAME }}
     needs: build-and-analyze # This ensures this job only runs if build-and-analyze succeeds
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
 
       - name: Log in to Amazon ECR
-        if: github.ref == 'refs/heads/main'
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
@@ -88,7 +88,6 @@ jobs:
           docker build -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:latest .
 
       - name: Push Docker image to ECR
-        if: github.ref == 'refs/heads/main'
         run: |
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:latest
 
@@ -98,6 +97,5 @@ jobs:
           version: 'latest' # Specify the version you need
 
       - name: Configure kubectl
-        if: github.ref == 'refs/heads/main'
         run: |
           aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }} --region ${{ secrets.AWS_REGION }}
