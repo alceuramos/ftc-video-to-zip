@@ -1,6 +1,10 @@
 name: lint-and-commit
 
 on:
+  workflow_run:
+    workflows: ["Terraform Deploy"] # Name of the first workflow
+    types:
+      - completed
   push:
     branches:
       - main
@@ -61,9 +65,11 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
       BUCKET_TF_STATE: ${{ secrets.AWS_BUCKET }}
+      EKS_CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}
     needs: build-and-analyze # This ensures this job only runs if build-and-analyze succeeds
     steps:
       - uses: actions/checkout@v4
+
       - name: Log in to Amazon ECR
         if: github.ref == 'refs/heads/main'
         id: login-ecr
@@ -78,3 +84,18 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: |
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:latest
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v1
+        with:
+          version: 'latest' # Specify the version you need
+
+      - name: Configure kubectl
+        if: github.ref == 'refs/heads/main'
+        run: |
+          aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }} --region ${{ secrets.AWS_REGION }}
+
+      - name: Restart Kubernetes Deployment
+        if: github.ref == 'refs/heads/main'
+        run: |
+          kubectl rollout restart --all
