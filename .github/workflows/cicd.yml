@@ -125,8 +125,9 @@ jobs:
       EKS_CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}
       AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
       ECR_REPOSITORY_NAME: ${{ secrets.ECR_REPOSITORY_NAME }}
+      DEPLOYMENT_NAME: "video-to-zip-service-api"
     needs: [setup-and-run-tests, terraform]
-    # if: github.event_name == 'push'
+    if: github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
 
@@ -153,4 +154,4 @@ jobs:
 
       - name: Restart Deployment
         run: |
-          kubectl rollout restart deployment video-to-zip-service-api
+          kubectl rollout restart deployment $DEPLOYMENT_NAME
