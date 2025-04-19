@@ -5,9 +5,9 @@ on:
     workflows: ["Terraform Deploy"] # Name of the first workflow
     types:
       - completed
-  push:
-    branches:
-      - main
+  # push:
+  #   branches:
+  #     - main
   pull_request:
     types: [opened, synchronize, reopened]
 
