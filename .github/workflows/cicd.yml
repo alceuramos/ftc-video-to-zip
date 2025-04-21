@@ -107,7 +107,7 @@ jobs:
       - name: Terraform Plan
         run: |
           cd terraform
-          terraform plan -out=tf.plan -var-file=terraform.tfvars.json
+          terraform plan -out=tf.plan -var-file=terraform.tfvars.json -lock=false
 
       - name: Terraform Apply
         if: github.event_name == 'push'
