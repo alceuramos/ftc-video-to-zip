@@ -121,6 +121,22 @@ Este projeto é uma plataforma modular e escalável de processamento de vídeo c
       +--> [Esquemas (DTOs)]
 ```
 
+## Diagrama da arquitetura na AWS
+
+![Diagrama da arquitetura na AWS](./docs/image.png)
+
+### Infraestrutura como Código (IaC):
+
+Terraform como ferramenta principal para provisionamento de infraestrutura.
+
+- Módulos organizados por serviço:
+  - eks/: Configuração do cluster Kubernetes
+  - db/: Configuração do banco de dados RDS
+  - s3/: Configuração do armazenamento
+  - security_group/: Regras de segurança
+  - ecr_video_to_zip_service/: Registry de containers
+  - video_to_zip_service/: Configuração do pods e load balancer
+
 ## Configuração do Ambiente
 
 1. Instale [Poetry](https://python-poetry.org/docs/) para gerenciamento de dependências.
