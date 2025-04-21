@@ -99,3 +99,22 @@ resource "kubernetes_deployment" "video_to_zip_service_api" {
   }
 }
 
+
+
+resource "kubernetes_horizontal_pod_autoscaler" "video_to_zip_service" {
+  metadata {
+    name = "video-to-zip-service-hpa"
+  }
+
+  spec {
+    max_replicas                      = 3
+    min_replicas                      = 1
+    target_cpu_utilization_percentage = 80
+
+    scale_target_ref {
+      api_version = "apps/v1"
+      kind        = "Deployment"
+      name        = kubernetes_deployment.video_to_zip_service_api.metadata[0].name
+    }
+  }
+}
