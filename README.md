@@ -1,124 +1,124 @@
 # ftc-video-to-zip-service
 
-Repositorio de microservico de conversão de vídeo para projeto do modulo final da fiap
+Repositório de microserviço de conversão de vídeo para projeto do módulo final da FIAP
 
-# Architecture
+# Arquitetura
 
-## Overview
+## Visão Geral
 
-This project is a modular, scalable video processing platform built with FastAPI, following Clean Architecture and SOLID principles. The system is designed for maintainability, testability, and extensibility, supporting user management, video upload, frame extraction, and cloud storage.
+Este projeto é uma plataforma modular e escalável de processamento de vídeo construída com FastAPI, seguindo a Arquitetura Limpa e os princípios SOLID. O sistema é projetado para manutenibilidade, testabilidade e extensibilidade, suportando gerenciamento de usuários, upload de vídeo, extração de quadros e armazenamento em nuvem.
 
-## Architectural Layers
+## Camadas Arquiteturais
 
-### 1. API Layer (Frameworks & Drivers)
+### 1. Camada de API (Frameworks & Drivers)
 
-- **Location:** `src/api/`
-- **Responsibility:** Exposes HTTP endpoints using FastAPI. Handles request validation, authentication, and delegates business logic to the service layer.
-- **Structure:**
-  - `app.py`: FastAPI app instantiation and route inclusion.
-  - `v1/`: Versioned API endpoints (`videos.py`, `users.py`, `auth.py`), with request validation in `v1/validations/`.
+- **Localização:** `src/api/`
+- **Responsabilidade:** Expõe endpoints HTTP usando FastAPI. Lida com validação de requisições, autenticação e delega a lógica de negócios para a camada de serviços.
+- **Estrutura:**
+  - `app.py`: Instanciação do app FastAPI e inclusão de rotas.
+  - `v1/`: Endpoints de API versionados (`videos.py`, `users.py`, `auth.py`), com validação de requisições em `v1/validations/`.
 
-### 2. Service Layer (Use Cases)
+### 2. Camada de Serviços (Casos de Uso)
 
-- **Location:** `src/services/`
-- **Responsibility:** Contains business logic and orchestrates workflows. Services are decoupled from frameworks and infrastructure, depending only on interfaces.
-- **Key Services:**
-  - `UserService`, `AuthService`: User management and authentication.
-  - `VideoService`: Video upload, frame extraction, and orchestration.
-  - `TempFileService`, `ZipService`, `VideoFrameExtractor`: Supporting utilities.
-  - `NotificationService`: Handles email and other user notifications.
+- **Localização:** `src/services/`
+- **Responsabilidade:** Contém a lógica de negócios e orquestra fluxos de trabalho. Os serviços são desacoplados de frameworks e infraestrutura, dependendo apenas de interfaces.
+- **Serviços Principais:**
+  - `UserService`, `AuthService`: Gerenciamento de usuários e autenticação.
+  - `VideoService`: Upload de vídeo, extração de quadros e orquestração.
+  - `TempFileService`, `ZipService`, `VideoFrameExtractor`: Utilitários de suporte.
+  - `NotificationService`: Lida com notificações por e-mail e outras para os usuários.
 
-### 3. Repository Layer (Interface Adapters)
+### 3. Camada de Repositório (Adaptadores de Interface)
 
-- **Location:** `src/repositories/`
-- **Responsibility:** Implements data access logic, translating between domain models and database models. Depends on interfaces defined in `db/postgresql/interfaces/`.
-- **Repositories:** `UserRepository`, `VideoRepository`.
+- **Localização:** `src/repositories/`
+- **Responsabilidade:** Implementa a lógica de acesso a dados, traduzindo entre modelos de domínio e modelos de banco de dados. Depende de interfaces definidas em `db/postgresql/interfaces/`.
+- **Repositórios:** `UserRepository`, `VideoRepository`.
 
-### 4. Infrastructure Layer
+### 4. Camada de Infraestrutura
 
-- **Location:** `src/infrastructure/`
-- **Responsibility:** Integrates with external systems (e.g., AWS S3 for storage). Implements interfaces defined in `core/interfaces/`.
-- **Example:** `S3StorageService` in `storage/`.
+- **Localização:** `src/infrastructure/`
+- **Responsabilidade:** Integra-se com sistemas externos (por exemplo, AWS S3 para armazenamento). Implementa interfaces definidas em `core/interfaces/`.
+- **Exemplo:** `S3StorageService` em `storage/`.
 
-### 5. Core Layer (Entities, Interfaces, Configuration)
+### 5. Camada Central (Entidades, Interfaces, Configuração)
 
-- **Location:** `src/core/`
-- **Responsibility:** Contains core abstractions, interfaces, security, and configuration.
-- **Components:**
-  - `interfaces/`: Abstract base classes for services (e.g., `StorageServiceInterface`).
-  - `settings.py`: Centralized configuration.
-  - `security.py`: Security utilities (JWT, password hashing).
-  - `dependency_injection.py`: Dependency injection container.
+- **Localização:** `src/core/`
+- **Responsabilidade:** Contém abstrações centrais, interfaces, segurança e configuração.
+- **Componentes:**
+  - `interfaces/`: Classes base abstratas para serviços (por exemplo, `StorageServiceInterface`).
+  - `settings.py`: Configuração centralizada.
+  - `security.py`: Utilitários de segurança (JWT, hash de senhas).
+  - `dependency_injection.py`: Contêiner de injeção de dependência.
 
-### 6. Database Layer
+### 6. Camada de Banco de Dados
 
-- **Location:** `src/db/`
-- **Responsibility:** Manages database connections and models.
-- **Structure:**
-  - `postgresql/database.py`: DB session management.
-  - `postgresql/models/`: SQLAlchemy ORM models.
-  - `postgresql/interfaces/`: Repository interfaces.
+- **Localização:** `src/db/`
+- **Responsabilidade:** Gerencia conexões e modelos de banco de dados.
+- **Estrutura:**
+  - `postgresql/database.py`: Gerenciamento de sessão do DB.
+  - `postgresql/models/`: Modelos ORM do SQLAlchemy.
+  - `postgresql/interfaces/`: Interfaces de repositório.
 
-### 7. Schemas (DTOs)
+### 7. Esquemas (DTOs)
 
-- **Location:** `src/schemas/`
-- **Responsibility:** Pydantic models for request/response validation and data transfer.
+- **Localização:** `src/schemas/`
+- **Responsabilidade:** Modelos Pydantic para validação de requisições/respostas e transferência de dados.
 
 ### 8. Templates
 
-- **Location:** `src/templates/`
-- **Responsibility:** Contains HTML or other templates used for email notifications or other templated outputs.
-- **Example:** `email_template.html` for sending formatted emails.
+- **Localização:** `src/templates/`
+- **Responsabilidade:** Contém HTML ou outros templates usados para notificações por e-mail ou outras saídas formatadas.
+- **Exemplo:** `email_template.html` para envio de e-mails formatados.
 
-## Key Architectural Principles
+## Princípios Arquiteturais Chave
 
-### Clean Architecture
+### Arquitetura Limpa
 
-- **Dependency Rule:** All dependencies point inward. The core business logic is independent of frameworks and infrastructure.
-- **Separation of Concerns:** Each layer has a clear, focused responsibility.
-- **Testability:** Business logic can be tested independently of the web framework or database.
+- **Regra de Dependência:** Todas as dependências apontam para dentro. A lógica de negócios central é independente de frameworks e infraestrutura.
+- **Separação de Preocupações:** Cada camada tem uma responsabilidade clara e focada.
+- **Testabilidade:** A lógica de negócios pode ser testada independentemente do framework web ou banco de dados.
 
-### SOLID Principles
+### Princípios SOLID
 
-- **Single Responsibility:** Each class/service has one responsibility.
-- **Open/Closed:** Interfaces and dependency injection allow for easy extension.
-- **Liskov Substitution:** Implementations can be swapped without breaking contracts.
-- **Interface Segregation:** Interfaces are focused and not overly broad.
-- **Dependency Inversion:** High-level modules depend on abstractions, not concrete implementations.
+- **Responsabilidade Única:** Cada classe/serviço tem uma responsabilidade.
+- **Aberto/Fechado:** Interfaces e injeção de dependência permitem fácil extensão.
+- **Substituição de Liskov:** Implementações podem ser trocadas sem quebrar contratos.
+- **Segregação de Interface:** Interfaces são focadas e não excessivamente amplas.
+- **Inversão de Dependência:** Módulos de alto nível dependem de abstrações, não de implementações concretas.
 
-## Data Flow
+## Fluxo de Dados
 
-1. **Request** hits the API endpoint (FastAPI route).
-2. **Validation** is performed using Pydantic schemas.
-3. **Service Layer** processes the request, orchestrating business logic.
-4. **Repositories** handle data persistence, abstracting the database.
-5. **Infrastructure** services (e.g., S3) handle external integrations.
-6. **Response** is returned to the client.
+1. **Requisição** atinge o endpoint da API (rota FastAPI).
+2. **Validação** é realizada usando esquemas Pydantic.
+3. **Camada de Serviços** processa a requisição, orquestrando a lógica de negócios.
+4. **Repositórios** lidam com a persistência de dados, abstraindo o banco de dados.
+5. **Serviços de Infraestrutura** (por exemplo, S3) lidam com integrações externas.
+6. **Resposta** é retornada ao cliente.
 
-## Extensibility & Maintainability
+## Extensibilidade & Manutenibilidade
 
-- **Add new storage backends:** Implement a new class in `infrastructure/storage/` and register it via dependency injection.
-- **Add new API versions:** Create a new folder under `api/` (e.g., `v2/`).
-- **Add new business logic:** Add new services in `services/` and corresponding interfaces.
+- **Adicionar novos backends de armazenamento:** Implemente uma nova classe em `infrastructure/storage/` e registre-a via injeção de dependência.
+- **Adicionar novas versões da API:** Crie uma nova pasta sob `api/` (por exemplo, `v2/`).
+- **Adicionar nova lógica de negócios:** Adicione novos serviços em `services/` e interfaces correspondentes.
 
-## Security & Best Practices
+## Segurança & Melhores Práticas
 
-- **Authentication:** JWT-based, using `fastapi-jwt-auth`.
-- **User Management:** Via `fastapi-users`.
-- **Validation:** Pydantic models for all input/output.
-- **Error Handling:** Centralized and consistent.
-- **Configuration:** Centralized in `core/settings.py`.
+- **Autenticação:** Baseada em JWT, usando `fastapi-jwt-auth`.
+- **Gerenciamento de Usuários:** Via `fastapi-users`.
+- **Validação:** Modelos Pydantic para todas as entradas/saídas.
+- **Tratamento de Erros:** Centralizado e consistente.
+- **Configuração:** Centralizada em `core/settings.py`.
 
-## Summary Diagram (Textual)
+## Diagrama Resumo (Textual)
 
 ```
-[API Layer] ---> [Service Layer] ---> [Repository Layer] ---> [Database]
+[Camada de API] ---> [Camada de Serviços] ---> [Camada de Repositório] ---> [Banco de Dados]
       |                  |                    |
-      |                  |                    +--> [Infrastructure Layer (e.g., S3)]
+      |                  |                    +--> [Camada de Infraestrutura (por exemplo, S3)]
       |                  |
-      |                  +--> [Core Layer (Interfaces, Security, Config)]
+      |                  +--> [Camada Central (Interfaces, Segurança, Config)]
       |
-      +--> [Schemas (DTOs)]
+      +--> [Esquemas (DTOs)]
 ```
 
 ## Configuração do Ambiente
